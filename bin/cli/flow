@@ -1,0 +1,148 @@
+#!/usr/bin/perl -w
+
+#### DEBUG
+my $DEBUG = 0;
+$DEBUG = 01;
+
+#### TIME
+my $time = time();
+my $duration = 0;
+my $current_time = $time;
+
+=head2
+
+APPLICATION
+
+    flow
+
+PURPOSE
+
+    Manage workflow files and run workflows
+
+USAGE
+
+    ./flow subcommand [switch] [args] [--help]
+
+
+ subcommand     :    Type of workflow object (work|app|param)
+ switch   :    Nested object (e.g., work app, app param)
+ args     :    Arguments for the selected subcommand
+ --help   :    print help info
+
+EXAMPLES
+
+PROJECTS
+
+# Add project to database
+/agua/apps/bin/cli/flow proj save --projfile ./Project1.proj
+
+# Add workflows to project (and save to database)
+/agua/apps/bin/cli/flow proj saveWorkflow --project Project1 --wkfile ./workflowOne.work
+
+WORKFLOWS
+
+# Create a workflow file with a specified name
+./flow work create --wkfile /workflows/workflowOne.wk --name workflowOne
+
+# Add an application to workflow file
+./flow work addApp --wkfile /workflows/workflowOne.wk --appfile /workflows/applicationOne.app --name applicationOne
+
+# Run a single application in a workflow
+./flow work app run --wkfile /workflows/workflowOne.wk --name applicationOne
+
+# Run all applications in workflow
+./flow work run --wkfile /workflows/workflowOne.wk 
+
+APPLICATIONS
+
+# Create an application file from a file containing the application run command
+./flow app loadCmd --cmdfile /workflows/applicationOne.cmd --appfile /workflows/applicationOne.app --name applicationOne
+
+=cut
+
+use strict;
+#use diagnostics;
+
+#### USE LIBRARY
+use Scalar::Util qw(weaken);
+use FindBin qw($Bin);
+use lib "$Bin/../../lib";
+
+#### EXTERNAL MODULES
+use Term::ANSIColor qw(:constants);
+use Data::Dumper;
+
+#### INTERNAL MODULES
+use Timer;
+use Conf::Yaml;
+use Agua::CLI::Flow;
+
+#### SET CONF FILE
+my $installdir  =   $ENV{'installdir'} || "/a";
+my $configfile  =   "$installdir/conf/config.yaml";
+my $logfile  =   "$installdir/log/flow.log";
+my $conf = Conf::Yaml->new(
+    memory      =>  1,
+    inputfile	=>	$configfile,
+    log         =>  2,
+    printlog    =>  2,
+    logfile     =>  $logfile
+);
+
+#### GET ARGUMENTS
+my @arguments = @ARGV;
+usage() if not @arguments;
+#print "flow    arguments: @arguments\n";
+
+#### GET SUBCOMMAND
+my $subcommand = shift @ARGV;
+#print "subcommand: $subcommand\n";
+print "No subcommand provided (try --help)\n" and exit if not defined $subcommand;
+usage() if $subcommand =~ /^-h$/ or $subcommand =~ /^--help$/;
+#print "subcommand: $subcommand\n";
+
+if ( $ARGV[0] !~ /^-/ ) {
+
+    #### GET FILE
+    my $file = shift @ARGV;
+    usage() if $file =~ /^-h$/ or $file =~ /^--help$/;
+    #print "flow    Can't find file: $file\n" and exit if not -f $file;
+    #print "flow    file: $file\n";
+        
+    #### MANAGE INDIVIDUAL OR NESTED WORKFLOW FILES
+    if ( $file =~ /\.proj$/ ) {
+        my $project = Agua::CLI::Flow->new(
+            inputfile   =>  $file,
+            conf        =>  $conf
+        );
+        $project->getopts();
+        $project->$subcommand();
+    }
+    else {
+        print "flow    file type '$file' not recognised (must be .proj, .work, .wk, .app or .param)\n";
+    }
+}
+else {
+    my $object = Agua::CLI::Flow->new(
+        conf        =>  $conf
+    );
+    $object->getopts();
+    $object->$subcommand();
+    
+}
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#                                    SUBROUTINES
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+sub usage
+{
+    print GREEN;
+    print `perldoc $0`;
+    print RESET;
+    exit;
+}
+
+
+

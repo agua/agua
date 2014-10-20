@@ -1,0 +1,99 @@
+README
+======
+
+1. Before You Install
+2. Installation
+3. Resources
+4. Developers
+5. License
+
+1. Before You Install
+=====================
+
+1.1 Hardware
+Agua's hardware requirements are relatively minimal:
+
+Memory      512MB RAM
+Disc space  320MB (stable)
+            1.7GB (development)
+
+Please note that you may need several 100 GBs of storage for input and output files depending on your experiment. To determine how much disk space you have, use the following command:
+
+df -ah
+
+1.2 Operating system
+
+Agua's full functionality is supported on Centos 5.4+ and Ubuntu 12.04+ but it will also work on other flavors of Linux such as MacOSX (Darwin). Windows is currently not supported. If you would like to request support for your operating system, please make a 'New Feature' request in the Helpdesk on the Agua website:
+
+http://www.aguadev.org
+
+1.3 Software
+
+The following are Agua's basic software requirements. 
+
+Perl 5.10+
+Git 1.6+
+
+You can verify these versions with the following commands:
+
+perl --version
+git --version
+
+
+2. Installation
+===============
+
+Install the dependencies as described below then follow the instructions to download the Agua source code from Github and run the installation and configuration scripts. Finally, update the Biorepository so that you can use it to install the latest versions of commonly used applications and analysis workflows.
+
+2.1 Dependencies
+
+The following commands are for Ubuntu/Debian systems. Replace them with the appropriate 'yum install' command for Centos/Fedora/Redhat systems.
+
+sudo apt-get install -y git
+sudo apt-get install -y cpanminus
+sudo apt-get install -y facter
+
+
+2.2 Download and Install
+
+Change to the '/' directory and clone Agua from Github:
+
+cd /
+sudo git clone https://github.com/agua/agua a
+
+Run the install script to install MySQL and other Agua dependencies:
+
+sudo /a/bin/install/install
+
+The configuration script requires manual user inputs. At the prompts, return to select the default value (in square parentheses e.g., [default value]) or input your chosen value then hit return.
+
+sudo /a/bin/install/configure
+
+
+2.3 Update the Biorepository
+
+Run the biorepo script to update the Biorepository, which contains installation instructions for commonly used applications and workflows:
+
+sudo /a/bin/install/biorepo --mode update
+
+
+3. Resources
+============
+
+For more information about Agua and related resources, browse to the Agua website:
+
+http://www.aguadev.org
+
+
+4. Developers
+=============
+
+If you'd like to tweak, fix, customize or otherwise improve Agua, please visit the 'Contribute' section of the Agua website:
+
+http://www.aguadev.org
+
+
+5. License
+==========
+
+Agua is freely available under the MIT Licence (see LICENSE.txt file for details).

@@ -1,0 +1,139 @@
+#!/usr/bin/perl -w
+
+#### DEBUG
+my $DEBUG = 0;
+$DEBUG = 01;
+
+#### TIME
+my $time = time();
+my $duration = 0;
+my $current_time = $time;
+
+=head2
+
+APPLICATION
+
+    app
+
+PURPOSE
+
+    Manage workflow files and run workflows
+
+USAGE
+
+    ./app subcommand [switch] [args] [--help]
+
+ subcommand     :    Mode (a.k.a. subcommand, subroutine) to be called
+               - create : Generate a new app file
+               - desc   : Describe the app file contents
+               - replace: Do text replace on field values in app file
+               - copy   : Copy app file to new app file
+ args     :    Arguments for the selected subcommand
+ --help   :    print help info
+
+EXAMPLES
+
+PROJECTS
+
+# Add project to database
+/agua/apps/bin/cli/flow proj save --projfile ./Project1.proj
+
+# Add workflows to project (and save to database)
+/agua/apps/bin/cli/flow proj saveWorkflow --project Project1 --wkfile ./workflowOne.work
+
+WORKFLOWS
+
+# Create a workflow file with a specified name
+./app create --wkfile /workflows/workflowOne.wk --name workflowOne
+
+# Add an application to workflow file
+./app addApp --wkfile /workflows/workflowOne.wk --appfile /workflows/applicationOne.app --name applicationOne
+
+# Run a single application in a workflow
+./app app run --wkfile /workflows/workflowOne.wk --name applicationOne
+
+# Run all applications in workflow
+./app run --wkfile /workflows/workflowOne.wk 
+
+APPLICATIONS
+
+# Create an application file from a file containing the application run command
+./app app loadCmd --cmdfile /workflows/applicationOne.cmd --appfile /workflows/applicationOne.app --name applicationOne
+
+=cut
+
+use strict;
+#use diagnostics;
+
+#### USE LIBRARY
+use Scalar::Util qw(weaken);
+use FindBin qw($Bin);
+use lib "$Bin/../../lib";
+
+#### EXTERNAL MODULES
+use Term::ANSIColor qw(:constants);
+use Data::Dumper;
+
+#### INTERNAL MODULES
+use Timer;
+use Conf::Yaml;
+use Agua::CLI::App;
+
+#### SET CONF FILE
+my $installdir  =   $ENV{'installdir'} || "/a";
+my $configfile  =   "$installdir/conf/config.yaml";
+my $logfile  =   "$installdir/log/flow.log";
+my $conf = Conf::Yaml->new(
+    memory      =>  1,
+    inputfile	=>	$configfile,
+    log         =>  2,
+    printlog    =>  2,
+    logfile     =>  $logfile
+);
+
+#### GET ARGUMENTS
+my @arguments = @ARGV;
+
+#### USAGE
+usage() if not @arguments;
+
+#### GET MODE
+my $subcommand = shift @ARGV;
+print "No subcommand provided (try --help)\n" and exit if not defined $subcommand;
+
+#### USAGE
+usage() if $subcommand =~ /^-h$/ or $subcommand =~ /^--help$/;
+
+#### VERIFY MODE
+my $subcommands   =   [ "addParam", "convert", "copy", "create", "deleteParam", "desc", "descParam", "edit", "loadCmd", "loadScrape", "loadScript", "loadUsage", "replace", "wiki" ];
+print "subcommand not supported: $subcommand\n" and exit if not supportedMode($subcommand, $subcommands);
+
+
+my $object = Agua::CLI::App->new(
+    conf        =>  $conf
+);
+$object->$subcommand();
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#                                    SUBROUTINES
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+sub supportedMode {
+    my $subcommand        =   shift;
+    my $subcommands       =   shift;
+    foreach my $expected ( @$subcommands ) {
+        if ( $subcommand eq $expected ) {
+            return 1;
+        }    
+    }
+    
+    return 0;
+}
+
+sub usage {
+    print GREEN;
+    print `perldoc $0`;
+    print RESET;
+    exit;
+}
+
